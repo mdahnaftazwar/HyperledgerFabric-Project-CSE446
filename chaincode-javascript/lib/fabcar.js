@@ -12,102 +12,67 @@ class FabCar extends Contract {
 
     async initLedger(ctx) {
         console.info('============= START : Initialize Ledger ===========');
-        const cars = [
+        const identities = [
             {
-                color: 'blue',
-                make: 'Toyota',
-                model: 'Prius',
-                owner: 'Tomoko',
+                department: 'HR',
+                role: 'Manager',
+                employee_name: 'Alice Johnson',
+                clearance_status: 'Active',
             },
             {
-                color: 'red',
-                make: 'Ford',
-                model: 'Mustang',
-                owner: 'Brad',
+                department: 'IT',
+                role: 'System Admin',
+                employee_name: 'Bob Smith',
+                clearance_status: 'Active',
             },
             {
-                color: 'green',
-                make: 'Hyundai',
-                model: 'Tucson',
-                owner: 'Jin Soo',
+                department: 'Finance',
+                role: 'Analyst',
+                employee_name: 'Charlie Davis',
+                clearance_status: 'Suspended',
             },
             {
-                color: 'yellow',
-                make: 'Volkswagen',
-                model: 'Passat',
-                owner: 'Max',
-            },
-            {
-                color: 'black',
-                make: 'Tesla',
-                model: 'S',
-                owner: 'Adriana',
-            },
-            {
-                color: 'purple',
-                make: 'Peugeot',
-                model: '205',
-                owner: 'Michel',
-            },
-            {
-                color: 'white',
-                make: 'Chery',
-                model: 'S22L',
-                owner: 'Aarav',
-            },
-            {
-                color: 'violet',
-                make: 'Fiat',
-                model: 'Punto',
-                owner: 'Pari',
-            },
-            {
-                color: 'indigo',
-                make: 'Tata',
-                model: 'Nano',
-                owner: 'Valeria',
-            },
-            {
-                color: 'brown',
-                make: 'Holden',
-                model: 'Barina',
-                owner: 'Shotaro',
-            },
+                department: 'IT',
+                role: 'Developer',
+                employee_name: 'Diana Prince',
+                clearance_status: 'Active',
+            }
         ];
 
-        for (let i = 0; i < cars.length; i++) {
-            cars[i].docType = 'car';
-            await ctx.stub.putState('CAR' + i, Buffer.from(JSON.stringify(cars[i])));
-            console.info('Added <--> ', cars[i]);
+        for (let i = 0; i < identities.length; i++) {
+            identities[i].docType = 'identity';
+            // Generating IDs in the requested format: EMP001, EMP002, etc.
+            await ctx.stub.putState('EMP' + (i + 1).toString().padStart(3, '0'), Buffer.from(JSON.stringify(identities[i])));
+            console.info('Added <--> ', identities[i]);
         }
         console.info('============= END : Initialize Ledger ===========');
     }
 
-    async queryCar(ctx, carNumber) {
-        const carAsBytes = await ctx.stub.getState(carNumber); // get the car from chaincode state
-        if (!carAsBytes || carAsBytes.length === 0) {
-            throw new Error(`${carNumber} does not exist`);
+    async queryIdentity(ctx, id) {
+        const identityAsBytes = await ctx.stub.getState(id); // get the identity from chaincode state
+        if (!identityAsBytes || identityAsBytes.length === 0) {
+            throw new Error(`${id} does not exist`);
         }
-        console.log(carAsBytes.toString());
-        return carAsBytes.toString();
+        console.log(identityAsBytes.toString());
+        return identityAsBytes.toString();
     }
 
-    async createCar(ctx, carNumber, make, model, color, owner) {
-        console.info('============= START : Create Car ===========');
+    async createIdentity(ctx, id, department, role, employee_name, clearance_status) {
+        console.info('============= START : Create Identity ===========');
 
-        const car = {
-            color,
-            docType: 'car',
-            make,
-            model,
-            owner,
+        const identity = {
+            department,
+            role,
+            employee_name,
+            clearance_status,
+            docType: 'identity', // Tracking document type as identity instead of car
         };
 
-        await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
-        console.info('============= END : Create Car ===========');
+        await ctx.stub.putState(id, Buffer.from(JSON.stringify(identity)));
+        console.info('============= END : Create Identity ===========');
     }
 
-    async queryAllCars(ctx) {
+    async queryAllIdentities(ctx) {
         const startKey = '';
         const endKey = '';
         const allResults = [];
@@ -126,18 +91,20 @@ class FabCar extends Contract {
         return JSON.stringify(allResults);
     }
 
-    async changeCarOwner(ctx, carNumber, newOwner) {
-        console.info('============= START : changeCarOwner ===========');
+    async updateClearance(ctx, id, newClearanceStatus) {
+        console.info('============= START : Update Clearance ===========');
 
-        const carAsBytes = await ctx.stub.getState(carNumber); // get the car from chaincode state
-        if (!carAsBytes || carAsBytes.length === 0) {
-            throw new Error(`${carNumber} does not exist`);
+        const identityAsBytes = await ctx.stub.getState(id); // get the identity from chaincode state
+        if (!identityAsBytes || identityAsBytes.length === 0) {
+            throw new Error(`${id} does not exist`);
         }
-        const car = JSON.parse(carAsBytes.toString());
-        car.owner = newOwner;
+        const identity = JSON.parse(identityAsBytes.toString());
+        
+        // Updating the clearance status parameter
+        identity.clearance_status = newClearanceStatus;
 
-        await ctx.stub.putState(carNumber, Buffer.from(JSON.stringify(car)));
-        console.info('============= END : changeCarOwner ===========');
+        await ctx.stub.putState(id, Buffer.from(JSON.stringify(identity)));
+        console.info('============= END : Update Clearance ===========');
     }
 
 }
