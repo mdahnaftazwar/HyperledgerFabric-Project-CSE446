@@ -60,6 +60,11 @@ class FabCar extends Contract {
     async createIdentity(ctx, id, department, role, employee_name, clearance_status) {
         console.info('============= START : Create Identity ===========');
 
+        const exists = await ctx.stub.getState(id);
+        if (exists && exists.length > 0) {
+            throw new Error(`The identity ${id} already exists on the ledger. Cannot overwrite.`);
+        }
+
         const identity = {
             department,
             role,
@@ -90,6 +95,43 @@ class FabCar extends Contract {
         console.info(allResults);
         return JSON.stringify(allResults);
     }
+
+    async queryIdentitiesByFilter(ctx, filterType, filterValue) {
+        console.info(`============= START : Query by ${filterType} ===========`);
+        
+        const queryString = {
+            selector: {
+                docType: 'identity',
+                [filterType]: filterValue
+            }
+        };
+
+        const iterator = await ctx.stub.getQueryResult(JSON.stringify(queryString));
+        const allResults = [];
+        
+        // Manual iterator loop for older Fabric SDK compatibility
+        let result = await iterator.next();
+        while (!result.done) {
+            if (result.value && result.value.value.toString) {
+                const strValue = Buffer.from(result.value.value).toString('utf8');
+                let record;
+                try {
+                    record = JSON.parse(strValue);
+                } catch (err) {
+                    console.log(err);
+                    record = strValue;
+                }
+                allResults.push({ Key: result.value.key, Record: record });
+            }
+            result = await iterator.next();
+        }
+        
+        console.info(allResults);
+        console.info(`============= END : Query by ${filterType} ===========`);
+        return JSON.stringify(allResults);
+    }
+
+
 
     async updateClearance(ctx, id, newClearanceStatus) {
         console.info('============= START : Update Clearance ===========');
