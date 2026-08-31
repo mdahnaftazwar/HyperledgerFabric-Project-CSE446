@@ -10,7 +10,6 @@ const { Gateway, Wallets } = require('fabric-network');
 const path = require('path');
 const fs = require('fs');
 
-
 async function main( params ) {
     try {
         // load the network configuration
@@ -40,22 +39,23 @@ async function main( params ) {
         // Get the contract from the network.
         const contract = network.getContract('fabcar');
         console.log({ contract, CL: contract.network })
-        // contract.network
-        const key = params.key
-        const newOwner = params.owner
+        
+        // gathering payload data for clearance update
+        const key = params.key;
+        const newClearanceStatus = params.clearance_status;
 
         // Submit the specified transaction.
-        // changeCarOwner transaction - requires 2 args , ex: ('changeCarOwner', 'CAR12', 'Dave')
-        await contract.submitTransaction('changeCarOwner', `${ key }`, `${ newOwner }`)
-        console.log('Change Owner Transaction has been submitted');
+        // updateClearance transaction - requires 2 args, ex: ('updateClearance', 'EMP001', 'Revoked')
+        await contract.submitTransaction('updateClearance', `${ key }`, `${ newClearanceStatus }`)
+        console.log('Update Clearance Transaction has been submitted');
 
         // Disconnect from the gateway.
         await gateway.disconnect();
 
     } 
     catch (error) {
-        console.error(`Failed to change owner transaction: ${error}`);
-        process.exit(1);
+        console.error(`Failed to update clearance transaction: ${error}`);
+        throw error;
     }
 }
 

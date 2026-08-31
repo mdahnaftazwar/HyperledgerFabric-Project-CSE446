@@ -4,9 +4,10 @@
 const express = require('express')
 const cors = require('cors')
 const query = require('./query');
-const createCar = require('./createCar')
-const changeOwner = require('./changeOwner')
+const createIdentity = require('./createIdentity')
+const updateClearance = require('./updateClearance')
 const bodyParser = require('body-parser')
+const filterIdentity = require('./filterIdentity');
 
 
 const app = express()
@@ -22,16 +23,16 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 })); 
 
 
-// get all car
-app.get('/get-car', function (req, res) {
+// get all identities
+app.get('/get-identity', function (req, res) {
     query.main( req.query )
     .then(result => {
         const parsedData = JSON.parse( result )
-        let carList
+        let identityList
 
-        // if user search car
+        // if user search identity
         if(  req.query.key ){
-            carList = [
+            identityList = [
                 {
                     Key: req.query.key,
                     Record: {
@@ -39,12 +40,12 @@ app.get('/get-car', function (req, res) {
                     }
                 }
             ]
-            res.send( carList )
+            res.send( identityList )
             return
         }
 
-        carList = parsedData
-        res.send( carList )
+        identityList = parsedData
+        res.send( identityList )
     })
     .catch(err => {
         console.error({ err })
@@ -52,9 +53,9 @@ app.get('/get-car', function (req, res) {
     })
 })
 
-// create a new car
+// create a new identity
 app.post('/create', function (req, res) {
-    createCar.main( req.body  )
+    createIdentity.main( req.body  )
     .then(result => {
         res.send({message: 'Created successfully'})
     })
@@ -64,9 +65,9 @@ app.post('/create', function (req, res) {
     })
 })
 
-// change car owner
+// update clearance status
 app.post('/update', function (req, res) {
-    changeOwner.main( req.body  )
+    updateClearance.main( req.body  )
     .then(result => {
         res.send({message: 'Updated successfully'})
     })
@@ -75,5 +76,18 @@ app.post('/update', function (req, res) {
         res.send('FAILED TO LOAD DATA!')
     })
 })
+
+// filter identities via CouchDB
+app.get('/filter-identity', function (req, res) {
+    filterIdentity.main( req.query )
+    .then(result => {
+        const parsedData = JSON.parse( result );
+        res.send( parsedData );
+    })
+    .catch(err => {
+        console.error({ err });
+        res.status(500).send('FAILED TO FILTER DATA!');
+    })
+});
 
 app.listen(3000, () => console.log('Server is running at port 3000'))
