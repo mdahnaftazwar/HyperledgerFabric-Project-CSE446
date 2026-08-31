@@ -43,7 +43,7 @@ async function main( queryData ) {
         /// IF QUERY DATA IS AVAILABLE
         if( queryData.key ){
 
-            const queryResult =  await contract.evaluateTransaction('queryCar', `${ queryData.key }`);
+            const queryResult =  await contract.evaluateTransaction('queryIdentity', `${ queryData.key }`);
             console.log(`QUERY Transaction has been evaluated, result is: ${queryResult.toString()}`)
 
             return queryResult
@@ -51,7 +51,7 @@ async function main( queryData ) {
 
         // Evaluate the specified transaction.
         // queryAllCars transaction - requires no arguments, ex: ('queryAllCars')
-        const result = await contract.evaluateTransaction('queryAllCars');
+        const result = await contract.evaluateTransaction('queryAllIdentities');
         console.log(`Transaction has been evaluated, result is: ${result.toString()}`);
         // Disconnect from the gateway.
         await gateway.disconnect()
