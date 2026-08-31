@@ -7,84 +7,95 @@
 
     <link rel="stylesheet" href="./styles.css">
 
-    <title>FabCar Using Hyperledger Fabric</title>
+    <title>Enterprise Identity Registry</title>
 </head>
 <body>
     <div class="text-center">
         <h1>
-            Fabcar
+            Enterprise Identity Dashboard
         </h1>
-        <button onclick="getAll()">Get All Car</button>
+        <button onclick="getAll()">Get All Identities</button>
+        <br><br>
+        
+        <!-- Member 3's ID Search -->
+        <input id="search-input" type="text" placeholder="Search by ID...">
+        <button onclick="search()">Search ID</button>
+        
         <span>||</span>
-        <input id="search-input" type="text">
-        <button onclick="search()">Search</button>
-        <div id="show-car"></div>
+        
+        <!-- Member 4's CouchDB Filter -->
+        <select id="filter-type">
+            <option value="department">Department</option>
+            <option value="clearance_status">Clearance Status</option>
+        </select>
+        <input id="filter-input" type="text" placeholder="Enter filter value (e.g., HR)...">
+        <button onclick="filterCouchDB()">Filter DB</button>
+
+        <div id="show-identity" style="margin-top: 20px;"></div>
     </div>
 
     <div class="text-center form-container">
-        <h3 >Create Car</h3>
-        <form id="createForm" action="" name="createCar">
+        <h3 >Issue New Identity</h3>
+        <form id="createForm" action="" name="createIdentity">
             <div>
-                <label for="">Car ID/Key</label>
-                <input name="key" />
+                <label for="">Employee ID (e.g., EMP001)</label>
+                <input name="key" required />
             </div>
             
             <div>
-                <label for="">Made In</label>
-                <input name="make" />
+                <label for="">Department (e.g., HR, IT)</label>
+                <input name="department" required />
             </div>
 
             <div>
-                <label for="">Model</label>
-                <input name="model" />
+                <label for="">Role</label>
+                <input name="role" required />
             </div>
 
             <div>
-                <label for="">Color</label>
-                <input name="color" />
+                <label for="">Employee Name</label>
+                <input name="employee_name" required />
             </div>
 
             <div>
-                <label for="">Owner</label>
-                <input name="owner" />
+                <label for="">Clearance Status</label>
+                <input name="clearance_status" required />
             </div>
 
             <div>
-                <button type="submit">Create</button>
+                <button type="submit">Create Identity</button>
             </div>
         </form>
     </div>
 
     <div class="text-center form-container">
-        <h3 >Update Owner</h3>
-        <form id="updateForm" action="" name="updateOwner">
+        <h3 >Update Clearance Status</h3>
+        <form id="updateForm" action="" name="updateClearance">
             <div>
-                <label for="">Car ID/Key</label>
-                <input name="key" />
+                <label for="">Employee ID</label>
+                <input name="key" required />
             </div>
             
             <div>
-                <label for="">New Owner</label>
-                <input name="owner" />
+                <label for="">New Clearance Status</label>
+                <input name="clearance_status" required />
             </div>
 
             <div>
-                <button type="submit">Update</button>
+                <button type="submit">Update Status</button>
             </div>
         </form>
     </div>
     
     <script>
 
-        // CREATING NEW CAR
+        // CREATING NEW IDENTITY
         const createForm = document.getElementById('createForm')
 
-        // THIS IS AN EVENT LISTENER WHICH WILL RUN WHEN WE CLICK THE CREATE BUTTON
         createForm.addEventListener("submit", function(event) {
             event.preventDefault()
             const bodyParam = new URLSearchParams( new FormData(createForm) )
             
-                //CALLING CREATE API
                 fetch('http://localhost:3000/create', {
                     method: 'POST',
                     body: bodyParam
@@ -94,21 +105,21 @@
                 })
                 .then( parsedRes => {
                     alert(parsedRes.message)
+                    createForm.reset();
+                    getAll();
                 })
                 .catch(err => {
                     console.error({ err })
                 })
         });
 
-        // UPDATE: CHANGING CAR OWNER
+        // UPDATE: CHANGING CLEARANCE STATUS
         const updateForm = document.getElementById('updateForm')
 
-        // THIS IS AN EVENT LISTENER WHICH WILL RUN WHEN WE CLICK THE UPDATE BUTTON
         updateForm.addEventListener("submit", function(event) {
             event.preventDefault()
             const bodyParam = new URLSearchParams( new FormData(updateForm) )
             
-                //CALLING UPDATE API
                 fetch('http://localhost:3000/update', {
                     method: 'POST',
                     body: bodyParam
@@ -122,6 +133,7 @@
                 })
                 .then( parsedRes => {
                     alert( parsedRes.message )
+                    updateForm.reset();
                     getAll()
                 })
                 .catch(err => {
@@ -130,51 +142,92 @@
                 })
         });
 
-
-        //SEARCH DATA
+        // SEARCH BY ID
         function search(){
-            // extracting value from input field
             const value = document.getElementById('search-input').value
             getAll( value )
         }
+
+        // COUCHDB RICH QUERY FILTER
+        function filterCouchDB() {
+            const filterType = document.getElementById('filter-type').value;
+            const filterValue = document.getElementById('filter-input').value;
+
+            if(!filterValue) {
+                alert("Please enter a filter value");
+                return;
+            }
+
+            const api = `http://localhost:3000/filter-identity?filterType=${filterType}&filterValue=${filterValue}`;
+            
+            fetch(api)
+                .then( res => res.json() )
+                .then( parsedRes => {
+                    let identityMarkup = ''; 
+                    
+                    parsedRes.forEach( item => {
+                        identityMarkup = identityMarkup +
+                            `<div class="car-item"> 
+                                <p><strong>ID:</strong> ${ item.Key }</p>
+                                <p><strong>Department:</strong> ${ item.Record.department }</p>
+                                <p><strong>Role:</strong> ${ item.Record.role }</p>
+                                <p><strong>Name:</strong> ${ item.Record.employee_name }</p>
+                                <p><strong>Status:</strong> ${ item.Record.clearance_status }</p>
+                            </div>`
+                    });
+                    
+                    const dataContainer = document.getElementById('show-identity');
+
+                    while (dataContainer.hasChildNodes()) {
+                        dataContainer.removeChild(dataContainer.firstChild);
+                    }
+
+                    if (identityMarkup === '') {
+                        dataContainer.innerHTML = '<p style="margin-top: 10px;">No identities found matching that criteria.</p>';
+                    } else {
+                        dataContainer.insertAdjacentHTML('beforeend', identityMarkup);
+                    }
+                })
+                .catch(err => {
+                    alert('Filter operation failed');
+                    console.error({ err });
+                });
+        }
         
-        // GETTING ALL CAR DATA FROM API
+        // GETTING ALL IDENTITY DATA
         function getAll( query ){
-            const api = query ? 'http://localhost:3000/get-car?key=' + query :  'http://localhost:3000/get-car'
+            const api = query ? 'http://localhost:3000/get-identity?key=' + query :  'http://localhost:3000/get-identity'
             fetch(api)
                 .then( res => {
                     return res.json();
                 })
                 .then( parsedRes => {
-                    let carMarkup = ''; 
+                    let identityMarkup = ''; 
                     parsedRes.forEach( item => {
-                        carMarkup = carMarkup +
+                        identityMarkup = identityMarkup +
                             `<div class="car-item"> 
-                                <p>Key: ${ item.Key }</p>
-                                <p>Made In: ${ item.Record.make }</p>
-                                <p>Model: ${ item.Record.model }</p>
-                                <p>Color: ${ item.Record.color }</p>
-                                <p>Owner: ${ item.Record.owner }</p>
+                                <p><strong>ID:</strong> ${ item.Key }</p>
+                                <p><strong>Department:</strong> ${ item.Record.department }</p>
+                                <p><strong>Role:</strong> ${ item.Record.role }</p>
+                                <p><strong>Name:</strong> ${ item.Record.employee_name }</p>
+                                <p><strong>Status:</strong> ${ item.Record.clearance_status }</p>
                             </div>`
                     })
-                    // getting the html container with id=show-car
-                    const carContainer = document.getElementById('show-car')
+                    const dataContainer = document.getElementById('show-identity')
 
-                    //CLEANING EXISTING CAR HTML NODE/ELEMENT
-                    while (carContainer.hasChildNodes()) {
-                        carContainer.removeChild(carContainer.firstChild);
+                    while (dataContainer.hasChildNodes()) {
+                        dataContainer.removeChild(dataContainer.firstChild);
                     }
 
-                    // Adding new car data markup
-                    carContainer.insertAdjacentHTML('beforeend', carMarkup)
+                    dataContainer.insertAdjacentHTML('beforeend', identityMarkup)
                 })
                 .catch(err => {
                     alert('Operation failed')
                     console.error({ err })
                 })
         }
-
         
+        window.onload = () => getAll();
     </script>
 </body>
 </html>

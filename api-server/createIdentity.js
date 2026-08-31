@@ -10,7 +10,6 @@ const { Gateway, Wallets } = require('fabric-network');
 const path = require('path');
 const fs = require('fs');
 
-
 async function main( params ) {
     try {
         // load the network configuration
@@ -40,16 +39,16 @@ async function main( params ) {
         // Get the contract from the network.
         const contract = network.getContract('fabcar');
 
-        // gathering payload data
-        const key = params.key
-        const make = params.make
-        const model = params.model 
-        const color = params.color 
-        const owner = params.owner 
+        // gathering payload data for identity
+        const key = params.key;
+        const department = params.department;
+        const role = params.role; 
+        const employee_name = params.employee_name; 
+        const clearance_status = params.clearance_status; 
 
         // Submit the specified transaction.
-        // createCar transaction - requires 5 argument, ex: ('createCar', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom')
-        await contract.submitTransaction('createCar', `${ key }`, `${ make }`, `${ model }`, `${ color }`, `${ owner }`);
+        // createIdentity transaction - requires 6 arguments, ex: ('createIdentity', 'EMP005', 'IT', 'Developer', 'Bob', 'Active')
+        await contract.submitTransaction('createIdentity', `${ key }`, `${ department }`, `${ role }`, `${ employee_name }`, `${ clearance_status }`);
         console.log('Transaction has been submitted');
 
         // Disconnect from the gateway.
@@ -58,7 +57,7 @@ async function main( params ) {
     } 
     catch (error) {
         console.error(`Failed to create transaction: ${error}`);
-        process.exit(1);
+        throw error;
     }
 }
 
