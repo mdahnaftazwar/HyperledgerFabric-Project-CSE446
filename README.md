@@ -40,3 +40,5 @@ The application utilizes a permissioned blockchain network to securely issue, tr
 * **CSS3**
 * **Vanilla JavaScript**
 * **Fetch API** (Client-to-Server Communication)
+
+Last updated: 01st September, 2026
